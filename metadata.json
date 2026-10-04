@@ -1,0 +1,6 @@
+{
+  "name": "OPEC Aurum Gems Integrated Management System (OA-GIMS)",
+  "description": "Centralized management platform for OPEC Aurum Gems unifying organization hierarchy, employee loan management, payroll deductions, and CSR community initiatives.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
