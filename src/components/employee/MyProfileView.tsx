@@ -11,7 +11,9 @@ import {
   FileText,
   Users2,
   CheckCircle2,
+  Coins,
 } from 'lucide-react';
+import { evaluateEmployeeCbu } from '../../lib/cbu/cbuCalculator';
 
 export const MyProfileView: React.FC = () => {
   const { currentUser, employees, branches, areas, regions, applications, activeLoans } = useApp();
@@ -21,6 +23,7 @@ export const MyProfileView: React.FC = () => {
   const area = areas.find(a => a.id === applicant.areaId);
   const region = regions.find(r => r.id === applicant.regionId);
   const service = calculateYearsOfService(applicant.dateHired);
+  const cbu = evaluateEmployeeCbu(applicant);
 
   // Guarantees where applicant is co-maker
   const myGuarantees = applications.filter(a =>
@@ -147,6 +150,70 @@ export const MyProfileView: React.FC = () => {
               })}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Capital Build-Up (CBU) & 10% Retainers Fee Equity Box */}
+      <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-amber-300/80 dark:border-amber-600/30 shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <Coins className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-bold text-slate-900 dark:text-white text-sm">
+                Capital Build-Up (CBU) & Separation Retainers Reserve
+              </h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Mandatory member equity at ₱100.00/payday (₱200/month)
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-bold font-mono px-2.5 py-1 rounded bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+            {cbu.paydaysCount} Paydays Logged
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="p-3 bg-amber-50/70 dark:bg-slate-700/50 rounded-xl border border-amber-200/80 dark:border-slate-600">
+            <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">
+              Total Accumulated CBU
+            </span>
+            <span className="text-xl font-bold font-mono text-amber-700 dark:text-amber-400">
+              {formatPHP(cbu.totalCbu)}
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">
+              ₱100/payday semi-monthly
+            </span>
+          </div>
+
+          <div className="p-3 bg-rose-50/70 dark:bg-slate-700/50 rounded-xl border border-rose-200/80 dark:border-slate-600">
+            <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">
+              10% Retainer's Fee (OPEC)
+            </span>
+            <span className="text-xl font-bold font-mono text-rose-600 dark:text-rose-400">
+              {formatPHP(cbu.retainersFee)}
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">
+              Given to OPEC upon resignation/AWOL/removal
+            </span>
+          </div>
+
+          <div className="p-3 bg-emerald-50/70 dark:bg-slate-700/50 rounded-xl border border-emerald-200/80 dark:border-slate-600">
+            <span className="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold block">
+              90% Net Refundable Equity
+            </span>
+            <span className="text-xl font-bold font-mono text-emerald-700 dark:text-emerald-400">
+              {formatPHP(cbu.netRefundableCbu)}
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-1">
+              Refundable upon clearance
+            </span>
+          </div>
+        </div>
+
+        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300">
+          <strong>Cooperative Separation Policy:</strong> Every employee contributes ₱100 per payday for CBU. Total CBU is subject to a 10% retainers fee given to OPEC if the employee resigns, is AWOL, or is removed from office or work. The remaining 90% is claimable upon complete clearance.
         </div>
       </div>
     </div>

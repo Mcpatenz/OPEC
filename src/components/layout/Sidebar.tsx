@@ -21,7 +21,12 @@ import {
   BadgeDollarSign,
   Briefcase,
   Layers,
+  Calculator,
+  CalendarDays,
+  Mail,
+  Megaphone,
 } from 'lucide-react';
+import { evaluateReLoanEligibility } from '../../lib/loans/eligibility';
 
 interface NavItem {
   id: string;
@@ -29,6 +34,7 @@ interface NavItem {
   icon: React.ElementType;
   count?: number;
   badge?: number;
+  badgeText?: string;
   badgeColor?: string;
   highlight?: boolean;
 }
@@ -53,7 +59,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   setIsOpenMobile,
 }) => {
-  const { applications, activeLoans, payrollDeductions } = useApp();
+  const { currentUser, employees, applications, activeLoans, payrollDeductions, announcements, csrProjects } = useApp();
+  const applicant = employees.find(e => e.id === currentUser.employeeId) || employees[0];
+  const reLoanEval = evaluateReLoanEligibility(applicant, activeLoans, applications);
 
   const pendingApprovalsCount = applications.filter(
     a => a.status === 'FOR_REVIEW' || a.status === 'CREDIT_COMMITTEE'
@@ -61,6 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const forReleaseCount = applications.filter(a => a.status === 'FOR_RELEASE').length;
   const scheduledDeductionsCount = payrollDeductions.filter(d => d.status === 'SCHEDULED').length;
+  const pinnedAnnouncementsCount = announcements.filter(a => a.isPinned).length;
 
   const handleNav = (tabId: string) => {
     setActiveTab(tabId);
@@ -91,13 +100,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'admin-active-loans', label: 'Active Loan Accounts', icon: BadgeDollarSign, count: activeLoans.length },
         { id: 'admin-loan-releasing', label: 'Loan Releasing Desk', icon: Receipt, badge: forReleaseCount > 0 ? forReleaseCount : undefined, badgeColor: 'bg-emerald-500' },
         { id: 'admin-payroll-deductions', label: 'Payroll Deductions', icon: FileSpreadsheet, badge: scheduledDeductionsCount > 0 ? scheduledDeductionsCount : undefined, badgeColor: 'bg-blue-500' },
+        { id: 'admin-email-scheduler', label: 'Payment Alert Scheduler', icon: Mail, badge: 2, badgeColor: 'bg-amber-500' },
         { id: 'admin-loan-products', label: 'Loan Policies & Products', icon: Settings },
       ],
     },
     {
-      group: 'Community CSR',
+      group: 'OPEC & Community',
       items: [
-        { id: 'admin-csr-projects', label: 'Projects & Beneficiaries', icon: HeartHandshake },
+        { id: 'admin-announcements', label: 'Announcements Board', icon: Megaphone, badge: pinnedAnnouncementsCount > 0 ? pinnedAnnouncementsCount : undefined, badgeColor: 'bg-amber-500' },
+        { id: 'admin-csr-projects', label: 'OPEC Activities & CSR', icon: HeartHandshake, count: csrProjects.length },
       ],
     },
     {
@@ -121,7 +132,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       group: 'My Loans',
       items: [
-        { id: 'emp-apply-loan', label: 'Apply for Loan', icon: FilePlus, highlight: true },
+        { id: 'emp-calendar', label: 'Repayment Calendar', icon: CalendarDays },
+        { id: 'emp-calculator', label: 'Repayment Simulator', icon: Calculator },
+        { id: 'emp-vault', label: 'Secure Document Vault', icon: ShieldCheck },
+        {
+          id: 'emp-apply-loan',
+          label: reLoanEval.hasActiveRegularMpl && reLoanEval.canReLoanRegularMpl
+            ? 'Apply for Re-Loan'
+            : (reLoanEval.hasActiveRegularMpl ? 'Apply Loan (Allowed)' : 'Apply for Loan'),
+          icon: FilePlus,
+          highlight: true,
+          badge: reLoanEval.hasActiveRegularMpl
+            ? (reLoanEval.canReLoanRegularMpl ? 'Re-Loan' : 'Allowed')
+            : undefined,
+          badgeColor: reLoanEval.canReLoanRegularMpl ? 'bg-emerald-400' : 'bg-amber-400',
+        },
         { id: 'emp-applications', label: 'My Applications', icon: CreditCard },
         { id: 'emp-active-loans', label: 'Active Loans & Ledger', icon: BadgeDollarSign },
       ],
@@ -129,7 +154,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       group: 'OPEC Activities',
       items: [
-        { id: 'emp-activities', label: 'Community Projects', icon: HeartHandshake },
+        { id: 'emp-announcements', label: 'Bulletins & Notices', icon: Megaphone, badge: pinnedAnnouncementsCount > 0 ? pinnedAnnouncementsCount : undefined, badgeColor: 'bg-amber-500' },
+        { id: 'emp-activities', label: 'Community & OPEC Activities', icon: HeartHandshake },
         { id: 'emp-qr-attendance', label: 'Field QR Check-in', icon: QrCode },
       ],
     },
@@ -152,6 +178,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isOpenMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
+        {/* Organization Brand Header in Sidebar */}
+        <div className="p-3.5 border-b border-slate-800/90 bg-slate-950/60 flex items-center gap-3">
+          <img
+            src="/src/assets/images/opec_logo_1791532750142.jpg"
+            alt="OPEC Aurum Gems Crest"
+            referrerPolicy="no-referrer"
+            className="w-10 h-10 rounded-full object-cover border-2 border-amber-400 shrink-0 shadow-md ring-1 ring-amber-500/30"
+          />
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-white tracking-tight truncate">
+              OPEC AURUM GEMS
+            </div>
+            <div className="text-[10px] text-amber-400 font-semibold truncate">
+              ZASURMIS REGION
+            </div>
+            <div className="text-[9px] text-slate-400 truncate">
+              M Lhuillier Cooperative
+            </div>
+          </div>
+        </div>
+
         <div className="py-4 px-3 space-y-6">
           {currentNav.map(section => (
             <div key={section.group}>

@@ -1,24 +1,30 @@
 export type UserRole =
   | 'SUPER_ADMIN'
+  | 'ADMIN'
   | 'OPEC_PRESIDENT'
+  | 'PRESIDENT'
+  | 'SECRETARY'
+  | 'OPEC_SECRETARY'
   | 'TREASURER'
+  | 'AREA_MANAGER'
+  | 'REGIONAL_MANAGER'
+  | 'MEMBER'
   | 'AUDITOR'
   | 'PAYROLL_MASTER'
   | 'OPEC_ADVISER'
-  | 'REGIONAL_MANAGER'
-  | 'AREA_MANAGER'
   | 'OPEC_OFFICER'
   | 'LOAN_OFFICER'
   | 'FINANCE_OFFICER'
   | 'PROJECT_COORDINATOR'
   | 'DOCUMENTATION_OFFICER'
-  | 'MEMBER'
   | 'VIEWER';
 
 export type EmploymentStatus =
   | 'PERMANENT'
   | 'PROBATIONARY'
   | 'RESIGNED'
+  | 'AWOL'
+  | 'REMOVED'
   | 'RETIRED'
   | 'TERMINATED'
   | 'INACTIVE';
@@ -27,6 +33,9 @@ export type LoanStatus =
   | 'DRAFT'
   | 'SUBMITTED'
   | 'FOR_REVIEW'
+  | 'AREA_MANAGER_REVIEW'
+  | 'OPEC_PRESIDENT_REVIEW'
+  | 'REGIONAL_MANAGER_REVIEW'
   | 'CREDIT_COMMITTEE'
   | 'APPROVED'
   | 'REJECTED'
@@ -83,6 +92,7 @@ export interface Employee {
   middleName?: string;
   lastName: string;
   suffix?: string;
+  gender?: string;
   birthDate: string;
   dateHired: string;
   employmentStatus: EmploymentStatus;
@@ -91,12 +101,20 @@ export interface Employee {
   contactNumber: string;
   address: string;
   regionId: string;
+  regionNumber?: string; // e.g. '20'
+  regionName?: string; // e.g. 'ZASURMIS'
   areaId: string;
+  areaName?: string; // 'Area A' | 'Area B' | 'Area C' | 'Area D' | 'Area E'
   branchId: string;
+  username?: string;
+  password?: string;
   opecMembership: boolean;
   opecPosition?: string;
   monthlySalary: number;
   avatarUrl?: string;
+  cbuBalance?: number; // Accumulated Capital Build-Up (₱100/payday)
+  separationReason?: string;
+  reportsToId?: string; // Reporting supervisor / manager employee ID
 }
 
 export interface LoanProduct {
@@ -122,6 +140,9 @@ export interface CoMakerSelection {
   employeeId: string;
   status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
   notes?: string;
+  signatureUrl?: string;
+  signatureDate?: string;
+  endorsedAt?: string;
 }
 
 export interface LoanApprovalRecord {
@@ -133,6 +154,8 @@ export interface LoanApprovalRecord {
   decision: ApprovalDecision;
   comments?: string;
   timestamp?: string;
+  signatureUrl?: string;
+  signatureDate?: string;
 }
 
 export interface LoanDocument {
@@ -142,6 +165,8 @@ export interface LoanDocument {
   uploadedAt: string;
   fileSize: string;
   url?: string;
+  category?: string;
+  dataUrl?: string;
 }
 
 export interface LoanApplication {
@@ -166,6 +191,8 @@ export interface LoanApplication {
   coMakers: CoMakerSelection[];
   approvals: LoanApprovalRecord[];
   documents: LoanDocument[];
+  applicantSignatureUrl?: string;
+  applicantSignatureDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -208,6 +235,8 @@ export interface LoanReleaseInfo {
   netAmount: number;
   referenceNumber: string;
   disbursementAccount?: string;
+  signatureUrl?: string;
+  signatureDate?: string;
 }
 
 export interface LoanAccount {
@@ -334,11 +363,14 @@ export interface ProjectExpense {
 export interface CSRProject {
   id: string;
   projectNumber: string;
-  name: string;
+  name: string; // Project Title
+  projectTitle?: string; // Explicit alias for user prompt requirement
+  location: string; // Project Address
+  projectAddress?: string; // Explicit alias for user prompt requirement
+  projectBeneficiaries?: string; // Summary of project beneficiaries
   category: 'EDUCATION' | 'CALAMITY_RELIEF' | 'HEALTH_NUTRITION' | 'LIVELIHOOD' | 'ENVIRONMENT_TREE_PLANTING' | 'COMMUNITY_DEVELOPMENT';
   description: string;
   objective: string;
-  location: string;
   startDate: string;
   endDate: string;
   budget: number;
@@ -351,6 +383,41 @@ export interface CSRProject {
   donations: ProjectDonation[];
   expenses: ProjectExpense[];
   accomplishmentSummary?: string;
+  photos?: string[]; // Multiple photos (data URLs or remote images)
+  videos?: string[]; // Uploaded video files (data URLs or blob URLs)
+  videoLink?: string; // Video URL (YouTube, Vimeo, MP4, etc.)
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type AnnouncementCategory =
+  | 'GENERAL'
+  | 'LOAN_POLICY'
+  | 'COMMUNITY'
+  | 'PAYROLL'
+  | 'URGENT'
+  | 'EVENT';
+
+export type AnnouncementPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category: AnnouncementCategory;
+  priority: AnnouncementPriority;
+  targetAudience: 'ALL' | 'MEMBERS' | 'OFFICERS' | 'MANAGEMENT';
+  isPinned: boolean;
+  authorName: string;
+  authorRole: string;
+  publishDate: string;
+  expiryDate?: string;
+  imageUrl?: string;
+  attachmentName?: string;
+  tags?: string[];
+  status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
+  createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AuditLog {
@@ -359,11 +426,19 @@ export interface AuditLog {
   userName: string;
   userRole: UserRole;
   action: string;
-  entityType: 'LOAN_APPLICATION' | 'LOAN_ACCOUNT' | 'PAYMENT' | 'PAYROLL' | 'EMPLOYEE' | 'PROJECT' | 'POLICY' | 'SYSTEM';
+  entityType: 'LOAN_APPLICATION' | 'LOAN_ACCOUNT' | 'PAYMENT' | 'PAYROLL' | 'EMPLOYEE' | 'PROJECT' | 'POLICY' | 'SYSTEM' | 'ANNOUNCEMENT';
   entityId: string;
   details: string;
   changes?: { field: string; oldVal?: string; newVal?: string }[];
 }
+
+export type NotificationCategory =
+  | 'LOAN_STATUS'
+  | 'COMAKER_REQUEST'
+  | 'UPCOMING_PAYMENT'
+  | 'PAYMENT_CREDITED'
+  | 'APPROVAL'
+  | 'SYSTEM';
 
 export interface AppNotification {
   id: string;
@@ -372,9 +447,12 @@ export interface AppNotification {
   timestamp: string;
   read: boolean;
   type: 'INFO' | 'ACTION_REQUIRED' | 'APPROVAL' | 'PAYMENT' | 'ALERT';
+  category?: NotificationCategory;
   targetRole?: UserRole[];
   targetEmployeeId?: string;
   linkAction?: string;
+  relatedId?: string;
+  actorName?: string;
 }
 
 export interface CurrentUser {
